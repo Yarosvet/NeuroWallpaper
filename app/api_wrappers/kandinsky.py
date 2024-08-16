@@ -43,12 +43,19 @@ class Text2ImageStatus:
 class KandinskyAPIWrapper:
     """Wrapper for the Kandinsky API"""
 
-    def __init__(self, api_key: str, secret_key: str):
+    def __init__(self, api_key: str = "", secret_key: str = ""):
         self.auth_headers = {
             "X-Key": f"Key {api_key}",
             "X-Secret": f"Secret {secret_key}"
         }
         self.base_url = "https://api-key.fusionbrain.ai/key/api/v1"
+
+    def set_credentials(self, api_key: str, secret_key: str):
+        """Set the API key and secret key"""
+        self.auth_headers.update({
+            "X-Key": f"Key {api_key}",
+            "X-Secret": f"Secret {secret_key}"
+        })
 
     @staticmethod
     def styles() -> list[Style]:
