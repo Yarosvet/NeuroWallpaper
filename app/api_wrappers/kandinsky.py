@@ -1,5 +1,6 @@
 """Kandinsky API wrapper"""
 import json
+import functools
 from dataclasses import dataclass
 
 import httpx
@@ -17,6 +18,12 @@ class Style:
     def from_dict(cls, data: dict[str, str]) -> "Style":
         """Create a Style object from a dictionary"""
         return cls(data["name"], data["title"], data["titleEn"], data["image"])
+
+
+STATUS_INITIAL = "INITIAL"
+STATUS_PROCESSING = "PROCESSING"
+STATUS_DONE = "DONE"
+STATUS_FAIL = "FAIL"
 
 
 @dataclass
@@ -58,6 +65,7 @@ class KandinskyAPIWrapper:
         })
 
     @staticmethod
+    @functools.cache
     def styles() -> list[Style]:
         """Get the list of available styles"""
         url = "https://cdn.fusionbrain.ai/static/styles/api"
@@ -95,7 +103,8 @@ class KandinskyAPIWrapper:
         r.raise_for_status()  # Raise an exception if the request failed
         return Text2ImageStatus.from_dict(r.json())
 
-    def get_text2image_model_id(self) -> int:
+    @functools.cached_property
+    def text2image_model_id(self) -> int:
         """Get the ID of the text-2-image model (the first one)"""
         url = f"{self.base_url}/models"
         r = httpx.request("GET", url, headers=self.auth_headers)

@@ -29,7 +29,9 @@ class KandinskyWidget(ApiWidget):
         """Set the list of styles"""
         # Delete all the children of the group box
         for c in self.ui.styles_group_box.children():
-            c.deleteLater()
+            if isinstance(c, QRadioButton):
+                c.deleteLater()
+
         # Add a radio button for each style
         for name, title in styles:
             radio_button = QRadioButton(title, parent=self.ui.styles_group_box)
@@ -49,7 +51,12 @@ class KandinskyWidget(ApiWidget):
         for c in self.ui.styles_group_box.children():
             if isinstance(c, QRadioButton) and c.property('style_name') == style_name:
                 c.setChecked(True)
-                break
+                return
+        # If not found, select the first one
+        for c in self.ui.styles_group_box.children():
+            if isinstance(c, QRadioButton):
+                c.setChecked(True)
+                return
 
     def get_selected_style(self) -> tuple[str, str]:
         """Return the selected style"""

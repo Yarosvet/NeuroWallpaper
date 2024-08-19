@@ -30,10 +30,9 @@ class Parameters(DataDictMixin):
 
 def default_settings_path() -> str:
     """Return the default settings path"""
-    data_path = Path("data/")
     if platform.system() == "Windows":
-        data_path = Path(os.getenv("APPDATA"), "NeuroWallpaper/")
-    return data_path.joinpath("settings.json").absolute().as_posix()
+        return Path(os.getenv("APPDATA"), "NeuroWallpaper/").absolute().as_posix()
+    return Path("data/").absolute().as_posix()
 
 
 class SettingsManager:
@@ -41,18 +40,19 @@ class SettingsManager:
 
     def __init__(self, path: str):
         self.params = Parameters()
-        self.file_path = path
+        self.base_path = path
+        self.json_settings_path = Path(self.base_path).joinpath("settings.json").absolute().as_posix()
 
     def load(self):
         """Update settings from saved file"""
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
+            with open(self.json_settings_path, 'r', encoding='utf-8') as f:
                 self.params = Parameters.from_dict(json.load(f))
         except (FileNotFoundError, json.JSONDecodeError, TypeError):
             pass
 
     def save(self):
         """Save settings to file"""
-        Path(self.file_path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.file_path, 'w', encoding='utf-8') as f:
+        Path(self.json_settings_path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.json_settings_path, 'w', encoding='utf-8') as f:
             json.dump(self.params.to_dict(), f)
