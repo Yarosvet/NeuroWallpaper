@@ -7,8 +7,10 @@ import platform
 import ctypes
 from pathlib import Path
 from typing import Any, Literal
+from logging import getLogger
 import inject
 from PyQt6.QtWidgets import QApplication
+from httpx import RequestError
 
 from app.gui import Gui
 from app.api_wrappers.kandinsky import KandinskyAPIWrapper, STATUS_DONE, STATUS_FAIL
@@ -19,10 +21,16 @@ def set_styles_to_gui_kandinsky(gui: Gui, kandinsky_api: KandinskyAPIWrapper):
     """Fetch from API and set the kandinsky styles to the GUI"""
 
     def _fetch_styles():
-        styles = kandinsky_api.styles()
+        try:
+            getLogger("app").debug("Fetching styles...")
+            styles = kandinsky_api.styles()
+        except RequestError:
+            getLogger("app").exception("Failed to fetch styles")
+            return
+        getLogger("app").debug("Styles fetched successfully")
         gui.bridge_set_styles([(style.name, style.title) for style in styles])
 
-    t = threading.Thread(target=_fetch_styles, name="Kandinsky-fetch-styles")
+    t = threading.Thread(target=_fetch_styles, name="Kandinsky-fetch-styles", daemon=True)
     t.start()
 
 
@@ -42,6 +50,10 @@ def _set_desktop_wallpaper(image: bytes, f: str = 'jpeg', gui: Gui = None):
         os.system(command_dark)
     elif platform.system().lower() == 'windows':
         ctypes.windll.user32.SystemParametersInfoW(20, 0, path.as_posix(), 0)
+    else:
+        getLogger("app").error("Unsupported OS: %s", platform.system())
+        return
+    getLogger("app").info("Wallpaper set successfully")
 
 
 @inject.autoparams()
@@ -65,32 +77,37 @@ def generate_kandinsky_desktop_wallpaper(  # pylint: disable=too-many-arguments
 
     def _generate_and_set():
         # Start generating the image
-        image_status = kandinsky_api.text2image(
-            model_id=kandinsky_api.text2image_model_id,
-            style=style,
-            prompt=prompt,
-            neg_prompt=neg_prompt,
-            width=w,
-            height=h,
-        )
-        # Wait until the image is ready
-        while image_status.status not in (STATUS_DONE, STATUS_FAIL):
-            time.sleep(1)
-            image_status = kandinsky_api.check_status(image_status.uuid)
-            print(f"Status: {image_status.status}")  # Debug!
+        getLogger("app").info("Generating image (%dx%d) using Kandinsky API...", w, h)
+        try:
+            image_status = kandinsky_api.text2image(
+                model_id=kandinsky_api.text2image_model_id,
+                style=style,
+                prompt=prompt,
+                neg_prompt=neg_prompt,
+                width=w,
+                height=h,
+            )
+            # Wait until the image is ready
+            while image_status.status not in (STATUS_DONE, STATUS_FAIL):
+                time.sleep(1)
+                image_status = kandinsky_api.check_status(image_status.uuid)
+                getLogger("app").debug("Status: %s", image_status.status)
+        except RequestError:
+            getLogger("app").exception("Failed to generate image")
+            return
         if image_status.status == STATUS_DONE:
             if image_status.censored:
-                # Show a message if the image was censored
-                print("The image was censored")
+                # Just log a warning if the image was censored
+                getLogger("app").warning("Generated image was censored")
+                return  # Do not set the wallpaper 0_o
             # Set the desktop wallpaper if the image is ready
             image_bytes = base64.b64decode(image_status.images[0])
             _set_desktop_wallpaper(image_bytes, f='jpeg')
         else:
             # Show an error message if the image failed to generate
-            # TODO: Normal logging and show messages in GUI
-            print(f"Failed to generate the image: {image_status.error_description}")
+            getLogger("app").error("Failed to generate image: %s", image_status.error_description)
 
-    t = threading.Thread(target=_generate_and_set, name="Kandinsky-generate-image")
+    t = threading.Thread(target=_generate_and_set, name="Kandinsky-generate-image", daemon=True)
     t.start()
 
 
@@ -98,3 +115,5 @@ def generate_desktop_wallpaper(api: Literal['kandinsky'], parameters: dict[str, 
     """Generate a desktop wallpaper"""
     if api == 'kandinsky':
         generate_kandinsky_desktop_wallpaper(**parameters)
+    else:
+        getLogger("app").error("Unsupported API: %s", api)

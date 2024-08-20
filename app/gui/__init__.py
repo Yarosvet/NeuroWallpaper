@@ -11,6 +11,8 @@ from .settings import SettingsManager
 
 # TODO: Minimize window to system tray
 # TODO: Show animation when generating a wallpaper
+# TODO: Show last generation time and status (OK/FAILED) in the GUI
+# TODO: "Run at system startup" checkbox
 class Gui:
     """Graphical user interface for the application"""
 
@@ -47,6 +49,8 @@ class Gui:
         self.main_window.generate_now_cb.set_callable(
             self.send_generate_callback_with_parameters)  # Generate now callback
         self.main_window.api_changed_cb.set_callable(self._update_and_save_selected_api)  # Update selected API
+        # Start timer if needed
+        self._toggle_timer_if_needed()
 
     def send_generate_callback_with_parameters(self):
         """Send the generate callback with the current parameters from the GUI"""
@@ -86,6 +90,10 @@ class Gui:
     def update_model(self):
         """Update the internal model from the GUI"""
         self.update_settings()  # pylint: disable=no-value-for-parameter
+        self._toggle_timer_if_needed()
+
+    def _toggle_timer_if_needed(self):
+        """Start the auto generate timer if needed"""
         # Update interval
         self.timer_generate.setInterval(self.settings.params.interval * 60 * 1000)  # Convert minutes to milliseconds
         # Update auto generate timer state
