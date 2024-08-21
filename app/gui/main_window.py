@@ -37,7 +37,8 @@ class MainWindow(QMainWindow):
         """Set the auto generate enabled"""
         self.ui.auto_change_checkbox.setChecked(enabled)
 
-    def get_auto_generate_enabled(self) -> bool:
+    @property
+    def auto_generate_enabled(self) -> bool:
         """Return the auto generate enabled"""
         return self.ui.auto_change_checkbox.isChecked()
 
@@ -46,7 +47,8 @@ class MainWindow(QMainWindow):
         if api == 'kandinsky':
             self.ui.kandinsky_radiobtn.setChecked(True)
 
-    def get_selected_api(self) -> Literal['kandinsky']:
+    @property
+    def selected_api(self) -> Literal['kandinsky']:
         """Return the selected API"""
         if self.ui.kandinsky_radiobtn.isChecked():
             return 'kandinsky'
@@ -70,6 +72,12 @@ class MainWindow(QMainWindow):
         widget = self.api_widget()
         return widget if isinstance(widget, KandinskyWidget) else None
 
-    def get_interval_value(self) -> int:
+    @property
+    def interval_value(self) -> int:
         """Return the interval value in minutes"""
         return self.ui.interval_spinbox.value()
+
+    def set_last_gen_state(self, time_str: str, is_ok: bool):
+        """Set the last generation state"""
+        self.ui.generation_time_label.setText(time_str)
+        self.ui.generation_state_label.setText("OK" if is_ok else "FAILED")  # TODO: use icons

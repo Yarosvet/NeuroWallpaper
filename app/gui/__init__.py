@@ -1,4 +1,5 @@
 """This module contains the main GUI class for the application"""
+from datetime import datetime
 import inject
 from PyQt6.QtCore import QTimer
 
@@ -11,7 +12,6 @@ from .settings import SettingsManager
 
 # TODO: Minimize window to system tray
 # TODO: Show animation when generating a wallpaper
-# TODO: Show last generation time and status (OK/FAILED) in the GUI
 # TODO: "Run at system startup" checkbox
 class Gui:
     """Graphical user interface for the application"""
@@ -21,6 +21,7 @@ class Gui:
         self.cb_fetch_styles = PendingCallback()  # It'll be triggered when it's time to fetch the styles for Kandinsky
         # These bridges will be called from outside
         self.bridge_set_styles = QtEventBridge(self.set_kandinsky_styles)  # When the styles are fetched
+        self.bridge_gen_state = QtEventBridge(self.set_last_gen_state)  # When the generation is done
 
         # Load settings
         self.settings = SettingsManager(settings_path)
@@ -41,6 +42,11 @@ class Gui:
         self.timer_generate.setInterval(self.settings.params.interval * 60 * 1000)  # Convert minutes to milliseconds
         self.main_window.set_interval_value(self.settings.params.interval)
         self.main_window.set_auto_generate_enabled(self.settings.params.auto_generate)
+        if self.settings.params.last_gen_time is not None and self.settings.params.last_gen_state is not None:
+            self.set_last_gen_state(
+                self.settings.params.last_gen_time,
+                self.settings.params.last_gen_state
+            )
         self.build_api_widget_from_settings()  # pylint: disable=no-value-for-parameter
 
         # Set callbacks
@@ -54,7 +60,7 @@ class Gui:
 
     def send_generate_callback_with_parameters(self):
         """Send the generate callback with the current parameters from the GUI"""
-        if self.main_window.get_selected_api() == 'kandinsky':
+        if self.main_window.selected_api == 'kandinsky':
             if (kandinsky_widget := self.main_window.kandinsky_widget_or_none()) is not None:
                 self.cb_generate(
                     api='kandinsky',
@@ -107,9 +113,9 @@ class Gui:
     @inject.autoparams()
     def update_settings(self, kandinsky_api: KandinskyAPIWrapper):
         """Update the settings from the GUI"""
-        self.settings.params.interval = self.main_window.get_interval_value()
-        self.settings.params.auto_generate = self.main_window.get_auto_generate_enabled()
-        self.settings.params.selected_api = self.main_window.get_selected_api()
+        self.settings.params.interval = self.main_window.interval_value
+        self.settings.params.auto_generate = self.main_window.auto_generate_enabled
+        self.settings.params.selected_api = self.main_window.selected_api
         if self.settings.params.selected_api == 'kandinsky':
             if (kandinsky := self.main_window.kandinsky_widget_or_none()) is not None:
                 self.settings.params.kandinsky_config.selected_style = kandinsky.get_selected_style()
@@ -137,3 +143,9 @@ class Gui:
         if (kandinsky := self.main_window.kandinsky_widget_or_none()) is not None:
             kandinsky.set_styles(styles)
             kandinsky.set_selected_style(self.settings.params.kandinsky_config.selected_style[0])
+
+    def set_last_gen_state(self, timestamp: float, is_ok: bool):
+        """Set the last generation state"""
+        self.main_window.set_last_gen_state(datetime.fromtimestamp(timestamp).strftime("%H:%M:%S"), is_ok)
+        self.settings.params.last_gen_time = timestamp
+        self.settings.params.last_gen_state = is_ok

@@ -24,6 +24,8 @@ class Parameters(DataDictMixin):
     """Settings parameters"""
     interval: int = 5
     auto_generate: bool = False
+    last_gen_state: bool | None = None
+    last_gen_time: float | None = None
     selected_api: Literal['kandinsky'] = 'kandinsky'
     kandinsky_config: KandinskyConfig = field(default_factory=KandinskyConfig)
 

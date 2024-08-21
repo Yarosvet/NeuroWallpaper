@@ -175,6 +175,27 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Last generation:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="generation_time_label">
+        <property name="text">
+         <string>None</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="generation_state_label">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
