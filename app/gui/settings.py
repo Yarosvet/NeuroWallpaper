@@ -26,6 +26,7 @@ class Parameters(DataDictMixin):
     auto_generate: bool = False
     last_gen_state: bool | None = None
     last_gen_time: float | None = None
+    hide_to_tray: bool = False
     selected_api: Literal['kandinsky'] = 'kandinsky'
     kandinsky_config: KandinskyConfig = field(default_factory=KandinskyConfig)
 

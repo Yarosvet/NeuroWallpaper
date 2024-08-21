@@ -1,6 +1,8 @@
 """Main window of the application"""
+import sys
 from typing import Literal
-from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QMainWindow, QSystemTrayIcon
+from PyQt6.QtCore import Qt, pyqtSlot
 
 from app.types import QtCallback
 from .view.ui_main_window import Ui_MainWindow
@@ -24,10 +26,29 @@ class MainWindow(QMainWindow):
         self.ui.auto_change_checkbox.checkStateChanged.connect(self.params_edited_cb.void_slot)
         self.ui.generate_button.clicked.connect(self.generate_now_cb.void_slot)
 
+        # Build the tray icon
+        self.tray_icon = QSystemTrayIcon(self)
+        # self.tray_icon.setIcon()  # TODO: Set the icon
+        self.tray_icon.activated.connect(self._tray_icon_activated)  # noqa  # Why IDE doesn't see connect() method?
+
+    @pyqtSlot()
+    def _tray_icon_activated(self):
+        """Show the window"""
+        self.tray_icon.hide()
+        self.show()
+        self.setWindowState(Qt.WindowState.WindowActive)
+
     def closeEvent(self, a0):  # pylint: disable=invalid-name
         """Close event"""
-        self.close_cb()
-        super().closeEvent(a0)
+        if self.ui.hide_to_tray_checkbox.isChecked():
+            # Hide to tray
+            a0.ignore()
+            self.tray_icon.show()
+            self.hide()
+        else:
+            self.close_cb()
+            super().closeEvent(a0)
+            sys.exit(0)
 
     def set_interval_value(self, value: int):
         """Set the interval value in minutes"""
@@ -81,3 +102,12 @@ class MainWindow(QMainWindow):
         """Set the last generation state"""
         self.ui.generation_time_label.setText(time_str)
         self.ui.generation_state_label.setText("OK" if is_ok else "FAILED")  # TODO: use icons
+
+    def set_hide_to_tray_enabled(self, enabled: bool):
+        """Set the hide to tray enabled"""
+        self.ui.hide_to_tray_checkbox.setChecked(enabled)
+
+    @property
+    def hide_to_tray_enabled(self) -> bool:
+        """Return the hide to tray enabled"""
+        return self.ui.hide_to_tray_checkbox.isChecked()

@@ -134,6 +134,17 @@
      </layout>
     </item>
     <item>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QCheckBox" name="hide_to_tray_checkbox">
+        <property name="text">
+         <string>Always hide to tray</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QGroupBox" name="api_groupbox">

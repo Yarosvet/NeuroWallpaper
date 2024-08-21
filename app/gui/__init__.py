@@ -10,7 +10,6 @@ from .api_widgets import KandinskyWidget
 from .settings import SettingsManager
 
 
-# TODO: Minimize window to system tray
 # TODO: Show animation when generating a wallpaper
 # TODO: "Run at system startup" checkbox
 class Gui:
@@ -42,6 +41,7 @@ class Gui:
         self.timer_generate.setInterval(self.settings.params.interval * 60 * 1000)  # Convert minutes to milliseconds
         self.main_window.set_interval_value(self.settings.params.interval)
         self.main_window.set_auto_generate_enabled(self.settings.params.auto_generate)
+        self.main_window.set_hide_to_tray_enabled(self.settings.params.hide_to_tray)
         if self.settings.params.last_gen_time is not None and self.settings.params.last_gen_state is not None:
             self.set_last_gen_state(
                 self.settings.params.last_gen_time,
@@ -115,6 +115,7 @@ class Gui:
         """Update the settings from the GUI"""
         self.settings.params.interval = self.main_window.interval_value
         self.settings.params.auto_generate = self.main_window.auto_generate_enabled
+        self.settings.params.hide_to_tray = self.main_window.hide_to_tray_enabled
         self.settings.params.selected_api = self.main_window.selected_api
         if self.settings.params.selected_api == 'kandinsky':
             if (kandinsky := self.main_window.kandinsky_widget_or_none()) is not None:
