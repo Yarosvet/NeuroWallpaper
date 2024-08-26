@@ -12,14 +12,14 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(600, 480)
+        MainWindow.resize(600, 600)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        MainWindow.setMinimumSize(QtCore.QSize(600, 480))
-        MainWindow.setMaximumSize(QtCore.QSize(600, 600))
+        MainWindow.setMinimumSize(QtCore.QSize(600, 600))
+        MainWindow.setMaximumSize(QtCore.QSize(600, 35500))
         MainWindow.setStyleSheet("QWidget {  /*QMainWindow etc.*/\n"
 "    background-color: rgb(33, 33, 33);\n"
 "}\n"
