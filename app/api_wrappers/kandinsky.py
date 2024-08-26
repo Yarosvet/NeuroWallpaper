@@ -12,13 +12,19 @@ class Style:
     name: str
     title: str
     title_en: str
-    image_url: str
 
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> "Style":
         """Create a Style object from a dictionary"""
-        return cls(data["name"], data["title"], data["titleEn"], data["image"])
+        return cls(data["name"], data["title"], data["titleEn"])
 
+
+DEFAULT_STYLES = [
+    Style("KANDINSKY", "Кандинский", "Kandinsky"),
+    Style("UHD", "Детальное фото", "Detailed photo"),
+    Style("ANIME", "Аниме", "Anime"),
+    Style("DEFAULT", "Свой стиль", "No style"),
+]
 
 STATUS_INITIAL = "INITIAL"
 STATUS_PROCESSING = "PROCESSING"
@@ -63,15 +69,6 @@ class KandinskyAPIWrapper:
             "X-Key": f"Key {api_key}",
             "X-Secret": f"Secret {secret_key}"
         })
-
-    @staticmethod
-    @functools.cache
-    def styles() -> list[Style]:
-        """Get the list of available styles"""
-        url = "https://cdn.fusionbrain.ai/static/styles/api"
-        r = httpx.request("GET", url)
-        r.raise_for_status()  # Raise an exception if the request failed
-        return [Style.from_dict(s) for s in r.json()]
 
     def text2image(  # pylint: disable=too-many-arguments
             self,

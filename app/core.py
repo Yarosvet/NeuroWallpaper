@@ -18,24 +18,6 @@ from app.api_wrappers.kandinsky import KandinskyAPIWrapper, STATUS_DONE, STATUS_
 
 
 @inject.autoparams()
-def set_styles_to_gui_kandinsky(gui: Gui, kandinsky_api: KandinskyAPIWrapper):
-    """Fetch from API and set the kandinsky styles to the GUI"""
-
-    def _fetch_styles():
-        try:
-            getLogger("app").debug("Fetching styles...")
-            styles = kandinsky_api.styles()
-        except RequestError:
-            getLogger("app").exception("Failed to fetch styles")
-            return
-        getLogger("app").debug("Styles fetched successfully")
-        gui.bridge_set_styles([(style.name, style.title) for style in styles])
-
-    t = threading.Thread(target=_fetch_styles, name="Kandinsky-fetch-styles", daemon=True)
-    t.start()
-
-
-@inject.autoparams()
 def _set_desktop_wallpaper(image: bytes, f: str = 'jpeg', gui: Gui = None):
     """Set the desktop wallpaper"""
     # Save it to settings folder

@@ -5,8 +5,8 @@ from pathlib import Path
 import inject
 from PyQt6.QtCore import QTimer, QDir
 
-from app.types import SimpleCallback, PendingCallback, QtEventBridge
-from app.api_wrappers.kandinsky import KandinskyAPIWrapper
+from app.types import SimpleCallback, QtEventBridge
+from app.api_wrappers.kandinsky import KandinskyAPIWrapper, DEFAULT_STYLES as DEFAULT_KANDINSKY_STYLES
 from .main_window import MainWindow
 from .api_widgets import KandinskyWidget
 from .settings import SettingsManager
@@ -32,9 +32,7 @@ class Gui:
         QDir.addSearchPath('fonts', get_path('res/fonts/'))
         # Callbacks
         self.cb_generate = SimpleCallback()  # It'll be triggered when it's time to generate a new picture (all cases)
-        self.cb_fetch_styles = PendingCallback()  # It'll be triggered when it's time to fetch the styles for Kandinsky
         # These bridges will be called from outside
-        self.bridge_set_styles = QtEventBridge(self.set_kandinsky_styles)  # When the styles are fetched
         self.bridge_gen_state = QtEventBridge(self.set_last_gen_state)  # When the generation is done
 
         # Load settings
@@ -93,7 +91,6 @@ class Gui:
             self.main_window.set_radio_selected_api('kandinsky')
             self.main_window.set_api_widget_scheme(KandinskyWidget)
             if (kandinsky := self.main_window.kandinsky_widget_or_none()) is not None:
-                kandinsky.set_styles([self.settings.params.kandinsky_config.selected_style])
                 kandinsky.set_api_key(self.settings.params.kandinsky_config.api_key)
                 kandinsky.set_secret(self.settings.params.kandinsky_config.api_secret)
                 kandinsky.set_negative_prompt(self.settings.params.kandinsky_config.negative_prompt)
@@ -103,8 +100,9 @@ class Gui:
                     self.settings.params.kandinsky_config.api_key,
                     self.settings.params.kandinsky_config.api_secret
                 )
-                # Now send a callback to fetch the styles
-                self.cb_fetch_styles()  # It's a pending callback, will be executed when the function is set
+                # Set styles and selected one
+                kandinsky.set_styles([(s.name, s.title_en) for s in DEFAULT_KANDINSKY_STYLES])
+                kandinsky.set_selected_style(self.settings.params.kandinsky_config.selected_style[0])
                 # Set callback for parameters change
                 kandinsky.params_edited_cb.set_callable(self.update_settings)
 
@@ -153,12 +151,6 @@ class Gui:
         """Update the selected API"""
         self.update_settings()  # pylint: disable=no-value-for-parameter
         self.build_api_widget_from_settings()  # pylint: disable=no-value-for-parameter
-
-    def set_kandinsky_styles(self, styles: list[tuple[str, str]]):
-        """Set the Kandinsky styles in the widget if it's selected"""
-        if (kandinsky := self.main_window.kandinsky_widget_or_none()) is not None:
-            kandinsky.set_styles(styles)
-            kandinsky.set_selected_style(self.settings.params.kandinsky_config.selected_style[0])
 
     def set_last_gen_state(self, timestamp: float, is_ok: bool):
         """Set the last generation state"""

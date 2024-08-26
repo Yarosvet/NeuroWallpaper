@@ -75,7 +75,7 @@ class QtCallback(SimpleCallback, QObject):
         return _slot
 
 
-class PendingCallback(SimpleCallback):
+class PendingCallback(SimpleCallback):  # Now it's not used, but let it be here
     """Provides a callback that can be called before setting the function"""
 
     def __init__(self):
