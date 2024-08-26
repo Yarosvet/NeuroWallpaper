@@ -48,7 +48,6 @@ class KandinskyWidget(ApiWidget):
 
     def set_selected_style(self, style_name: str):
         """Set the selected style"""
-        # FIXME: (BUG) Checkbox doesn't get checked after styles loaded and this method called
         for c in self.ui.styles_group_box.children():
             if isinstance(c, QRadioButton) and c.property('style_name') == style_name:
                 c.setChecked(True)

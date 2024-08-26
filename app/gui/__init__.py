@@ -21,7 +21,6 @@ def get_path(relative_path: str) -> str:
     return str(bundle_dir / relative_path)
 
 
-# TODO: Show animation when generating a wallpaper
 # TODO: "Run at system startup" checkbox
 class Gui:
     """Graphical user interface for the application"""
@@ -30,10 +29,6 @@ class Gui:
         # Configure search paths
         QDir.addSearchPath('img', get_path('res/img/'))
         QDir.addSearchPath('fonts', get_path('res/fonts/'))
-        # Callbacks
-        self.cb_generate = SimpleCallback()  # It'll be triggered when it's time to generate a new picture (all cases)
-        # These bridges will be called from outside
-        self.bridge_gen_state = QtEventBridge(self.set_last_gen_state)  # When the generation is done
 
         # Load settings
         self.settings = SettingsManager(settings_path)
@@ -47,6 +42,12 @@ class Gui:
         self.timer_generate.timeout.connect(  # noqa  # Why IDE doesn't see connect() method?
             self.send_generate_callback_with_parameters
         )
+
+        # Callbacks
+        self.cb_generate = SimpleCallback()  # It'll be triggered when it's time to generate a new picture (all cases)
+        # These bridges will be called from outside
+        self.bridge_gen_state = QtEventBridge(self.set_last_gen_state)  # When the generation is done
+        self.bridge_set_loading = QtEventBridge(self.set_loading)  # When the loading state is changed
 
     def build_requiring_deps(self):
         """Second part of constructor, must be executed after injector configured"""
@@ -157,3 +158,8 @@ class Gui:
         self.main_window.set_last_gen_state(datetime.fromtimestamp(timestamp).strftime("%a %H:%M:%S"), is_ok)
         self.settings.params.last_gen_time = timestamp
         self.settings.params.last_gen_state = is_ok
+
+    def set_loading(self, is_loading: bool):
+        """Set the loading state"""
+        self.main_window.set_loading_visible(is_loading)
+        self.main_window.set_generate_button_enabled(not is_loading)

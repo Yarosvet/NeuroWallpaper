@@ -63,6 +63,7 @@ def generate_kandinsky_desktop_wallpaper(  # pylint: disable=too-many-arguments,
     def _generate_and_set():
         # Start generating the image
         getLogger("app").info("Generating image (%dx%d) using Kandinsky API...", w, h)
+        success = False
         try:
             image_status = kandinsky_api.text2image(
                 model_id=kandinsky_api.text2image_model_id,
@@ -77,28 +78,24 @@ def generate_kandinsky_desktop_wallpaper(  # pylint: disable=too-many-arguments,
                 time.sleep(1)
                 image_status = kandinsky_api.check_status(image_status.uuid)
                 getLogger("app").debug("Status: %s", image_status.status)
+            if image_status.status == STATUS_DONE:
+                if image_status.censored:
+                    # Just log a warning if the image was censored
+                    getLogger("app").warning("Generated image was censored")
+                    return  # Do not set the wallpaper 0_o
+                # Set the desktop wallpaper if the image is ready
+                image_bytes = base64.b64decode(image_status.images[0])
+                _set_desktop_wallpaper(image_bytes, f='jpeg')
+                success = True  # Set the flag which will be passed to the callback
+            else:
+                # Show an error message if the image failed to generate
+                getLogger("app").error("Failed to generate image: %s", image_status.error_description)
         except RequestError:
             getLogger("app").exception("Failed to generate image")
-            if on_finish is not None:
-                on_finish(False)
             return
-        if image_status.status == STATUS_DONE:
-            if image_status.censored:
-                # Just log a warning if the image was censored
-                getLogger("app").warning("Generated image was censored")
-                if on_finish is not None:
-                    on_finish(False)
-                return  # Do not set the wallpaper 0_o
-            # Set the desktop wallpaper if the image is ready
-            image_bytes = base64.b64decode(image_status.images[0])
-            _set_desktop_wallpaper(image_bytes, f='jpeg')
+        finally:
             if on_finish is not None:
-                on_finish(True)
-        else:
-            # Show an error message if the image failed to generate
-            getLogger("app").error("Failed to generate image: %s", image_status.error_description)
-            if on_finish is not None:
-                on_finish(False)
+                on_finish(success)
 
     t = threading.Thread(target=_generate_and_set, name="Kandinsky-generate-image", daemon=True)
     t.start()
@@ -111,8 +108,10 @@ def generate_desktop_wallpaper(api: Literal['kandinsky'], parameters: dict[str, 
     def _on_finish_generation(is_ok: bool):
         """Callback for when the generation finishes"""
         gui.bridge_gen_state(time.time(), is_ok)  # Set state in the GUI via QtBridge
+        gui.bridge_set_loading(False)  # Hide the loading spinner
 
     if api == 'kandinsky':
+        gui.bridge_set_loading(True)  # Show the loading spinner
         generate_kandinsky_desktop_wallpaper(**parameters, on_finish=_on_finish_generation)
     else:
         getLogger("app").error("Unsupported API: %s", api)

@@ -2,8 +2,8 @@
 import sys
 from typing import Literal
 from PyQt6.QtWidgets import QMainWindow, QSystemTrayIcon
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtGui import QPixmap, QMovie
+from PyQt6.QtCore import Qt, pyqtSlot, QSize
 
 from app.types import QtCallback
 from .view.ui_main_window import Ui_MainWindow
@@ -23,6 +23,11 @@ class MainWindow(QMainWindow):
         # Load the UI
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # Set the loading animation
+        self.ui.loading_label.setMovie(QMovie("img:loading.gif"))
+        self.ui.loading_label.movie().setScaledSize(QSize(30, 30))
+        self.ui.loading_label.movie().start()
+        self.set_loading_visible(False)  # Hide it by default
         # Connect the signals
         self.ui.interval_spinbox.valueChanged.connect(self.params_edited_cb.void_slot)
         self.ui.kandinsky_radiobtn.toggled.connect(self.api_changed_cb.void_slot)
@@ -40,6 +45,14 @@ class MainWindow(QMainWindow):
         self.tray_icon.hide()
         self.show()
         self.setWindowState(Qt.WindowState.WindowActive)
+
+    def set_loading_visible(self, loading: bool):
+        """Set the loading state"""
+        self.ui.loading_label.setVisible(loading)
+
+    def set_generate_button_enabled(self, enabled: bool):
+        """Set the generate button enabled"""
+        self.ui.generate_button.setEnabled(enabled)
 
     def closeEvent(self, a0):  # pylint: disable=invalid-name
         """Close event"""

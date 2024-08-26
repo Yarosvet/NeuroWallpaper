@@ -450,6 +450,13 @@ QSpinBox {
        </spacer>
       </item>
       <item>
+       <widget class="QLabel" name="loading_label">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="generate_button">
         <property name="enabled">
          <bool>true</bool>
