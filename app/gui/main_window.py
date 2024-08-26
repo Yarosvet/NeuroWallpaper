@@ -2,6 +2,7 @@
 import sys
 from typing import Literal
 from PyQt6.QtWidgets import QMainWindow, QSystemTrayIcon
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, pyqtSlot
 
 from app.types import QtCallback
@@ -14,18 +15,20 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        # Callbacks
         self.close_cb = QtCallback()
         self.params_edited_cb = QtCallback()
         self.generate_now_cb = QtCallback()
         self.api_changed_cb = QtCallback()
-
+        # Load the UI
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # Connect the signals
         self.ui.interval_spinbox.valueChanged.connect(self.params_edited_cb.void_slot)
         self.ui.kandinsky_radiobtn.toggled.connect(self.api_changed_cb.void_slot)
-        self.ui.auto_change_checkbox.checkStateChanged.connect(self.params_edited_cb.void_slot)
+        self.ui.auto_change_checkbox.toggled.connect(self.params_edited_cb.void_slot)
         self.ui.generate_button.clicked.connect(self.generate_now_cb.void_slot)
-
+        self.ui.hide_to_tray_checkbox.toggled.connect(self.params_edited_cb.void_slot)
         # Build the tray icon
         self.tray_icon = QSystemTrayIcon(self)
         # self.tray_icon.setIcon()  # TODO: Set the icon
@@ -101,7 +104,10 @@ class MainWindow(QMainWindow):
     def set_last_gen_state(self, time_str: str, is_ok: bool):
         """Set the last generation state"""
         self.ui.generation_time_label.setText(time_str)
-        self.ui.generation_state_label.setText("OK" if is_ok else "FAILED")  # TODO: use icons
+        self.ui.generation_state_label.setPixmap(
+            QPixmap('img:ok.svg' if is_ok else 'img:fail.svg')
+        )
+        self.ui.generation_state_label.setToolTip('Success' if is_ok else 'Failed')
 
     def set_hide_to_tray_enabled(self, enabled: bool):
         """Set the hide to tray enabled"""

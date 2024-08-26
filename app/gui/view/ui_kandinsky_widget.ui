@@ -13,35 +13,104 @@
   <property name="windowTitle">
    <string>Kandinsky API Configuration</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget {
+	background-color: rgb(33, 33, 33);
+}
+
+QLabel {
+	color: white;
+}
+
+QGroupBox {
+	color: white;
+}
+
+QRadioButton{
+	color: white;
+	font: 11pt &quot;Inter&quot;;
+}
+
+QLineEdit {
+	color: white;
+	background-color: rgb(48, 48, 48);
+	border: none;
+	border-radius: 3px;
+}
+
+QPlainTextEdit {
+	color: white;
+	background-color: rgb(48, 48, 48);
+	border: none;
+	border-radius: 4px;
+}
+
+QRadioButton {
+	color: white
+}
+
+QRadioButton::indicator {
+    width:                  10px;
+    height:                 10px;
+    border-radius:          7px;
+    border:                 2px solid white;
+}
+
+QRadioButton::indicator:checked {
+    background-color:       #46A229;
+}
+
+QRadioButton::indicator:unchecked {
+    background-color:       rgb(48, 48, 48);
+}
+</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
-    <number>3</number>
+    <number>9</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="apikey_label">
-       <property name="text">
-        <string>API Key</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="apikey_lineedit"/>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
-     <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="1" column="0">
       <widget class="QLabel" name="label">
+       <property name="font">
+        <font>
+         <family>Inter</family>
+        </font>
+       </property>
        <property name="text">
         <string>API Secret</string>
        </property>
       </widget>
      </item>
-     <item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="apikey_label">
+       <property name="font">
+        <font>
+         <family>Inter</family>
+        </font>
+       </property>
+       <property name="text">
+        <string>API Key</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="apikey_lineedit">
+       <property name="font">
+        <font>
+         <family>Roboto Mono</family>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
       <widget class="QLineEdit" name="apisecret_lineedit">
+       <property name="font">
+        <font>
+         <family>Roboto Mono</family>
+        </font>
+       </property>
        <property name="echoMode">
         <enum>QLineEdit::Password</enum>
        </property>
@@ -53,6 +122,12 @@
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
       <widget class="QGroupBox" name="styles_group_box">
+       <property name="font">
+        <font>
+         <family>Inter</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <property name="title">
         <string>Select style</string>
        </property>
@@ -64,13 +139,24 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QLabel" name="negative_prompt_label">
+       <property name="font">
+        <font>
+         <family>Inter</family>
+        </font>
+       </property>
        <property name="text">
         <string>Negative prompt</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="negative_prompt_lineedit"/>
+      <widget class="QLineEdit" name="negative_prompt_lineedit">
+       <property name="font">
+        <font>
+         <family>Roboto Mono</family>
+        </font>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -78,6 +164,12 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QLabel" name="prompt_label">
+       <property name="font">
+        <font>
+         <family>Inter</family>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="text">
         <string>Prompt</string>
        </property>
@@ -85,6 +177,11 @@
      </item>
      <item>
       <widget class="QPlainTextEdit" name="prompt_lineedit">
+       <property name="font">
+        <font>
+         <family>Roboto Mono</family>
+        </font>
+       </property>
        <property name="documentTitle">
         <string/>
        </property>

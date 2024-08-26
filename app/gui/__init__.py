@@ -1,7 +1,9 @@
 """This module contains the main GUI class for the application"""
+import sys
 from datetime import datetime
+from pathlib import Path
 import inject
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QTimer, QDir
 
 from app.types import SimpleCallback, PendingCallback, QtEventBridge
 from app.api_wrappers.kandinsky import KandinskyAPIWrapper
@@ -10,12 +12,25 @@ from .api_widgets import KandinskyWidget
 from .settings import SettingsManager
 
 
+def get_path(relative_path: str) -> str:
+    """Get the absolute path of a file in the bundle"""
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        bundle_dir = Path(sys._MEIPASS)  # noqa  # pylint: disable=protected-access
+    else:
+        bundle_dir = Path(__file__).parent
+    return str(bundle_dir / relative_path)
+
+
 # TODO: Show animation when generating a wallpaper
 # TODO: "Run at system startup" checkbox
 class Gui:
     """Graphical user interface for the application"""
 
     def __init__(self, settings_path: str):
+        # Configure search paths
+        QDir.addSearchPath('img', get_path('res/img/'))
+        QDir.addSearchPath('fonts', get_path('res/fonts/'))
+        # Callbacks
         self.cb_generate = SimpleCallback()  # It'll be triggered when it's time to generate a new picture (all cases)
         self.cb_fetch_styles = PendingCallback()  # It'll be triggered when it's time to fetch the styles for Kandinsky
         # These bridges will be called from outside
@@ -147,6 +162,6 @@ class Gui:
 
     def set_last_gen_state(self, timestamp: float, is_ok: bool):
         """Set the last generation state"""
-        self.main_window.set_last_gen_state(datetime.fromtimestamp(timestamp).strftime("%H:%M:%S"), is_ok)
+        self.main_window.set_last_gen_state(datetime.fromtimestamp(timestamp).strftime("%a %H:%M:%S"), is_ok)
         self.settings.params.last_gen_time = timestamp
         self.settings.params.last_gen_state = is_ok
