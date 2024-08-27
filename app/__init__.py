@@ -17,8 +17,10 @@ def config_injector(binder: inject.Binder):
     binder.bind(Gui, Gui(settings_path=settings.default_settings_path()))
 
 
-def run():
+def run(on_startup: bool = False):
     """Run the application"""
+    # Create folders
+    pathlib.Path(settings.default_settings_path()).mkdir(parents=True, exist_ok=True)
     # Initialize the logger
     init_logger((pathlib.Path(settings.default_settings_path()) / "app.log").as_posix())
     getLogger("app").info("Starting the application")
@@ -28,8 +30,9 @@ def run():
     inject.instance(Gui).build_requiring_deps()
     # Set the callbacks between the GUI and the core
     inject.instance(Gui).cb_generate.set_callable(core.generate_desktop_wallpaper)
+    inject.instance(Gui).cb_update_startup.set_callable(core.update_startup_entry)
     # Show the GUI
-    inject.instance(Gui).show()
+    inject.instance(Gui).show(from_startup=on_startup)
     # Run the application
     try:
         inject.instance(QApplication).exec()

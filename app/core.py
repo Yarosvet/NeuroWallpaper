@@ -5,6 +5,7 @@ import base64
 import os
 import platform
 import ctypes
+import sys
 from pathlib import Path
 from typing import Any, Literal
 from collections.abc import Callable
@@ -115,3 +116,75 @@ def generate_desktop_wallpaper(api: Literal['kandinsky'], parameters: dict[str, 
         generate_kandinsky_desktop_wallpaper(**parameters, on_finish=_on_finish_generation)
     else:
         getLogger("app").error("Unsupported API: %s", api)
+
+
+def _update_startup_entry_windows(run_at_startup: bool):
+    """Update the startup entry on Windows"""
+    import winreg  # pylint: disable=import-outside-toplevel
+    # TODO: Test it on Windows
+    app_name = "NeuroWallpaper"
+    if not hasattr(sys, '_MEIPASS'):
+        getLogger("app").warning(
+            "Cannot add startup entry in non-frozen mode (available with compiled executable only)"
+        )
+        return
+    exe_path_with_arg = f'"{sys.executable}" --startup'
+    key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE) as key:
+            if run_at_startup:
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, exe_path_with_arg)
+                getLogger("app").info("Startup entry added successfully")
+            else:
+                winreg.DeleteValue(key, app_name)
+                getLogger("app").info("Startup entry removed successfully")
+    except FileNotFoundError:
+        getLogger("app").error("Registry key not found: %s", key_path)
+    except PermissionError:
+        getLogger("app").error("Permission denied while accessing the registry. Try running as administrator.")
+    except Exception as e:  # pylint: disable=broad-except
+        getLogger("app").exception("Failed to update startup entry: %s", e)
+
+
+def _update_startup_entry_linux(run_at_startup: bool):
+    """Update the startup entry on Linux"""
+    # TODO: add support for other desktop environments
+    app_name = "NeuroWallpaper"
+    if hasattr(sys, '_MEIPASS'):  # If we are running in a frozen environment
+        exec_str = Path(sys.executable).as_posix()
+    else:
+        exec_str = f"{Path(sys.executable).as_posix()} {Path(sys.argv[0]).as_posix()}"  # Python and script path
+    desktop_entry = f"""[Desktop Entry]
+Type=Application
+Exec={exec_str} --startup
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name={app_name}
+Comment=Start {app_name} at login"""
+    autostart_dir = Path.home().joinpath(".config", "autostart")
+    autostart_dir.mkdir(parents=True, exist_ok=True)
+    desktop_file = autostart_dir.joinpath(f"{app_name}.desktop")
+
+    try:
+        if run_at_startup:
+            with open(desktop_file, "w", encoding='utf-8') as f:
+                f.write(desktop_entry)
+            getLogger("app").info("Startup entry added successfully")
+        else:
+            if desktop_file.exists():
+                desktop_file.unlink()
+            getLogger("app").info("Startup entry removed successfully")
+    except Exception as e:  # pylint: disable=broad-except
+        getLogger("app").exception("Failed to update startup entry: %s", e)
+
+
+def update_startup_entry(run_at_startup: bool):
+    """Update the startup entry"""
+    if platform.system().lower() == 'linux':
+        _update_startup_entry_linux(run_at_startup)
+    elif platform.system().lower() == 'windows':
+        _update_startup_entry_windows(run_at_startup)
+    else:
+        getLogger("app").error("Unsupported OS: %s", platform.system())

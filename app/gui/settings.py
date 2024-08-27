@@ -20,13 +20,14 @@ class KandinskyConfig(DataDictMixin):
 
 
 @dataclass
-class Parameters(DataDictMixin):
+class Parameters(DataDictMixin):  # pylint: disable=too-many-instance-attributes
     """Settings parameters"""
     interval: int = 5
     auto_generate: bool = False
     last_gen_state: bool | None = None
     last_gen_time: float | None = None
     hide_to_tray: bool = False
+    run_at_startup: bool = False
     selected_api: Literal['kandinsky'] = 'kandinsky'
     kandinsky_config: KandinskyConfig = field(default_factory=KandinskyConfig)
 
@@ -34,8 +35,10 @@ class Parameters(DataDictMixin):
 def default_settings_path() -> str:
     """Return the default settings path"""
     if platform.system() == "Windows":
-        return Path(os.getenv("APPDATA"), "NeuroWallpaper/").absolute().as_posix()
-    return Path("data/").absolute().as_posix()
+        return Path(os.getenv("APPDATA"), "NeuroWallpaper_data/").absolute().as_posix()
+    if platform.system() == "Linux":
+        return Path(os.getenv("HOME"), ".config/NeuroWallpaper_data/").absolute().as_posix()
+    return Path(os.getcwd(), "NeuroWallpaper_data/").absolute().as_posix()
 
 
 class SettingsManager:
@@ -56,6 +59,5 @@ class SettingsManager:
 
     def save(self):
         """Save settings to file"""
-        Path(self.json_settings_path).parent.mkdir(parents=True, exist_ok=True)
         with open(self.json_settings_path, 'w', encoding='utf-8') as f:
             json.dump(self.params.to_dict(), f)

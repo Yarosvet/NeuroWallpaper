@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import inject
 from PyQt6.QtCore import QTimer, QDir
+from PyQt6.QtGui import QFontDatabase
 
 from app.types import SimpleCallback, QtEventBridge
 from app.api_wrappers.kandinsky import KandinskyAPIWrapper, DEFAULT_STYLES as DEFAULT_KANDINSKY_STYLES
@@ -21,7 +22,6 @@ def get_path(relative_path: str) -> str:
     return str(bundle_dir / relative_path)
 
 
-# TODO: "Run at system startup" checkbox
 class Gui:
     """Graphical user interface for the application"""
 
@@ -34,6 +34,10 @@ class Gui:
         self.settings = SettingsManager(settings_path)
         self.settings.load()
 
+        # Load fonts
+        QFontDatabase.addApplicationFont("fonts:RobotoMono.ttf")
+        QFontDatabase.addApplicationFont("fonts:Inter/Inter-VariableFont_opsz,wght.ttf")
+
         # Create the main window
         self.main_window = MainWindow()
 
@@ -45,6 +49,7 @@ class Gui:
 
         # Callbacks
         self.cb_generate = SimpleCallback()  # It'll be triggered when it's time to generate a new picture (all cases)
+        self.cb_update_startup = SimpleCallback()  # It'll be triggered when the run-at-startup setting is changed
         # These bridges will be called from outside
         self.bridge_gen_state = QtEventBridge(self.set_last_gen_state)  # When the generation is done
         self.bridge_set_loading = QtEventBridge(self.set_loading)  # When the loading state is changed
@@ -56,6 +61,7 @@ class Gui:
         self.main_window.set_interval_value(self.settings.params.interval)
         self.main_window.set_auto_generate_enabled(self.settings.params.auto_generate)
         self.main_window.set_hide_to_tray_enabled(self.settings.params.hide_to_tray)
+        self.main_window.set_run_at_startup_enabled(self.settings.params.run_at_startup)
         if self.settings.params.last_gen_time is not None and self.settings.params.last_gen_state is not None:
             self.set_last_gen_state(
                 self.settings.params.last_gen_time,
@@ -69,6 +75,7 @@ class Gui:
         self.main_window.generate_now_cb.set_callable(
             self.send_generate_callback_with_parameters)  # Generate now callback
         self.main_window.api_changed_cb.set_callable(self._update_and_save_selected_api)  # Update selected API
+        self.main_window.startup_changed_cb.set_callable(self._update_startup_and_save)  # Update startup on change
         # Start timer if needed
         self._toggle_timer_if_needed()
 
@@ -130,6 +137,7 @@ class Gui:
         self.settings.params.interval = self.main_window.interval_value
         self.settings.params.auto_generate = self.main_window.auto_generate_enabled
         self.settings.params.hide_to_tray = self.main_window.hide_to_tray_enabled
+        self.settings.params.run_at_startup = self.main_window.run_at_startup_enabled
         self.settings.params.selected_api = self.main_window.selected_api
         if self.settings.params.selected_api == 'kandinsky':
             if (kandinsky := self.main_window.kandinsky_widget_or_none()) is not None:
@@ -144,14 +152,22 @@ class Gui:
                     self.settings.params.kandinsky_config.api_secret
                 )
 
-    def show(self):
+    def show(self, from_startup: bool = False, hidden_in_tray: bool = False):
         """Show the GUI"""
-        self.main_window.show()
+        if hidden_in_tray or (from_startup and self.settings.params.hide_to_tray):
+            self.main_window.hide_to_tray()
+        else:
+            self.main_window.show()
 
     def _update_and_save_selected_api(self):
         """Update the selected API"""
         self.update_settings()  # pylint: disable=no-value-for-parameter
         self.build_api_widget_from_settings()  # pylint: disable=no-value-for-parameter
+
+    def _update_startup_and_save(self):
+        """Update the run-at-startup setting"""
+        self.update_settings()  # pylint: disable=no-value-for-parameter
+        self.cb_update_startup(self.settings.params.run_at_startup)
 
     def set_last_gen_state(self, timestamp: float, is_ok: bool):
         """Set the last generation state"""

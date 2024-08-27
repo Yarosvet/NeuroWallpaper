@@ -20,6 +20,7 @@ class MainWindow(QMainWindow):
         self.params_edited_cb = QtCallback()
         self.generate_now_cb = QtCallback()
         self.api_changed_cb = QtCallback()
+        self.startup_changed_cb = QtCallback()
         # Load the UI
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow):
         self.ui.auto_change_checkbox.toggled.connect(self.params_edited_cb.void_slot)
         self.ui.generate_button.clicked.connect(self.generate_now_cb.void_slot)
         self.ui.hide_to_tray_checkbox.toggled.connect(self.params_edited_cb.void_slot)
+        self.ui.run_at_startup_checkbox.toggled.connect(self.startup_changed_cb.void_slot)
         # Build the tray icon
         self.tray_icon = QSystemTrayIcon(self)
         # self.tray_icon.setIcon()  # TODO: Set the icon
@@ -54,13 +56,17 @@ class MainWindow(QMainWindow):
         """Set the generate button enabled"""
         self.ui.generate_button.setEnabled(enabled)
 
+    def hide_to_tray(self):
+        """Hide the window to the tray"""
+        self.tray_icon.show()
+        self.hide()
+
     def closeEvent(self, a0):  # pylint: disable=invalid-name
         """Close event"""
         if self.ui.hide_to_tray_checkbox.isChecked():
-            # Hide to tray
+            # TODO: I don't like how it behaves now, should be improved to context menu
             a0.ignore()
-            self.tray_icon.show()
-            self.hide()
+            self.hide_to_tray()
         else:
             self.close_cb()
             super().closeEvent(a0)
@@ -78,6 +84,15 @@ class MainWindow(QMainWindow):
     def auto_generate_enabled(self) -> bool:
         """Return the auto generate enabled"""
         return self.ui.auto_change_checkbox.isChecked()
+
+    def set_run_at_startup_enabled(self, enabled: bool):
+        """Set the run at startup enabled"""
+        self.ui.run_at_startup_checkbox.setChecked(enabled)
+
+    @property
+    def run_at_startup_enabled(self) -> bool:
+        """Return the run at startup enabled"""
+        return self.ui.run_at_startup_checkbox.isChecked()
 
     def set_radio_selected_api(self, api: Literal['kandinsky']):
         """Set the radio button for the selected API"""

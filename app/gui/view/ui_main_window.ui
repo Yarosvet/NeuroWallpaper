@@ -293,6 +293,19 @@ QSpinBox {
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="run_at_startup_checkbox">
+        <property name="font">
+         <font>
+          <family>Inter</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Run at system startup</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
